@@ -90,14 +90,55 @@ class DroidCardsView extends View {
      */
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+
         // Don't draw anything until all the Asynctasks are done and all the DroidCards are ready.
         if (mDroids.length > 0 && mDroidCards.size() == mDroids.length) {
             // Loop over all the droids, except the last one.
-            for (int i = 0; i < mDroidCards.size(); i++) {
+            int i;
+            for (i = 0; i < mDroidCards.size() - 1; i++) {
+
                 // Each card is laid out a little to the right of the previous one.
                 mCardLeft = i * mCardSpacing;
+
+                // Save the canvas state.
+                /**
+                Saves the current matrix and clip onto a private stack.
+
+                Subsequent calls to translate,scale,rotate,skew,concat or clipRect, clipPath
+                will all operate as usual, but when the balancing call to restore() is made,
+                those calls will be forgotten, and the settings that existed before the save() will be reinstated.
+                 **/
+                canvas.save();
+
+                // Restrict the drawing area to only what will be visible.
+                /**
+                 clipRect (float left, float top, float right, float bottom)
+
+                 Intersect the current clip with the specified rectangle, which is expressed in local coordinates.
+                 */
+                canvas.clipRect(
+                        mCardLeft,
+                        0,
+                        mCardLeft + mCardSpacing,
+                        mDroidCards.get(i).getHeight()
+                );
+
+                // Draw the card. Only the parts of the card that lie within the bounds defined by
+                // the clipRect() get drawn.
                 drawDroidCard(canvas, mDroidCards.get(i), mCardLeft, 0);
+
+                // Revert canvas to non-clipping state.
+                /**
+                 This call balances a previous call to save(),
+                 and is used to remove all modifications to the matrix/clip state
+                 since the last save call. It is an error to call restore() more times than save() was called.
+                 */
+                canvas.restore();
             }
+
+            // Draw the final card. This one doesn't get clipped.
+            drawDroidCard(canvas, mDroidCards.get(mDroidCards.size() - 1),
+                    mCardLeft + mCardSpacing, 0);
         }
 
         // Invalidate the whole view. Doing this calls onDraw() if the view is visible.
@@ -114,17 +155,12 @@ class DroidCardsView extends View {
 
         // Draw outer rectangle.
         paint.setAntiAlias(true);
-        paint.setColor(Color.WHITE);
-        paint.setStyle(Paint.Style.FILL);
         Rect cardRect = new Rect(
                 (int)left,
                 (int)top,
                 (int)left + (int) droidCard.getWidth(),
                 (int)top + (int) droidCard.getHeight()
         );
-        canvas.drawRect(cardRect, paint);
-
-        // Draw border.
         paint.setStyle(Paint.Style.STROKE);
         paint.setColor(Color.DKGRAY);
         canvas.drawRect(cardRect, paint);
